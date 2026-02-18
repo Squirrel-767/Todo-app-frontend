@@ -1,11 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import './TodosPage.css';
 
 export default function TodosPage() {
   const [todos, setTodos] = useState([]);
   const [title, setTitle] = useState('');
+  const [activeUser, setActiveUser] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(base64));
+        setActiveUser(payload.email || payload.username || payload.sub || '');
+      }
+    } catch (e) {
+      console.error('Failed to decode token:', e);
+    }
+  }, []);
 
   // Load todos on page open
   useEffect(() => {
@@ -35,22 +50,36 @@ export default function TodosPage() {
   };
 
   return (
-    <div>
-      <h1>My Todos</h1>
-      <button onClick={handleLogout}>Logout</button>
-      <input placeholder="New todo..." value={title} onChange={e => setTitle(e.target.value)} />
-      <button onClick={addTodo}>Add</button>
-      {todos.map(todo => (
-        <div key={todo.id}>
-          <span style={{ textDecoration: todo.isCompleted ? 'line-through' : 'none' }}>
-            {todo.title}
-          </span>
-          <button onClick={() => toggleTodo(todo)}>
-            {todo.isCompleted ? 'Undo' : 'Done'}
-          </button>
-          <button onClick={() => deleteTodo(todo.id)}>Delete</button>
+    <div className="todos-page">
+      <div className="todos-container">
+        <div className="todos-header">
+          <h1 className="todos-title">My Todos</h1>
+          <button className="logout-button" onClick={handleLogout}>Logout</button>
         </div>
-      ))}
+        <p className="welcome-text">Welcome, {activeUser}</p>
+        <div className="add-todo-row">
+          <input
+            className="todo-input"
+            placeholder="New todo..."
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+          <button className="add-button" onClick={addTodo}>Add</button>
+        </div>
+        <div className="todo-list">
+          {todos.map(todo => (
+            <div className="todo-item" key={todo.id}>
+              <span className={`todo-title${todo.isCompleted ? ' completed' : ''}`}>
+                {todo.title}
+              </span>
+              <button className="toggle-button" onClick={() => toggleTodo(todo)}>
+                {todo.isCompleted ? 'Undo' : 'Done'}
+              </button>
+              <button className="delete-button" onClick={() => deleteTodo(todo.id)}>Delete</button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
